@@ -91,16 +91,17 @@ module.exports = function(app) {
       }
       const thread = await Thread.findById(req.body.thread_id);
       if (!thread) return res.status(404).send('Thread não encontrada');
+      const now = new Date();
       const newReply = new Reply({
         text: req.body.text,
         delete_password: req.body.delete_password,
         reported: false,
         thread: thread._id,
-        created_on: new Date()
+        created_on: now
       });
       await newReply.save();
       thread.replies.push(newReply._id);
-      thread.bumped_on = new Date();
+      thread.bumped_on = now;
       await thread.save();
       res.json({ _id: newReply._id, text: newReply.text, created_on: newReply.created_on, thread: thread._id });
     } catch (err) {
