@@ -1,8 +1,17 @@
 'use strict';
+const helmet = require('helmet');
 require('dotenv').config();
 const express     = require('express');
 const bodyParser  = require('body-parser');
 const cors        = require('cors');
+const mongoose    = require('mongoose');
+
+// Configuração do MongoDB para testes
+const mongoURI = process.env.NODE_ENV === 'test' 
+  ? process.env.MONGO_URI + '_test'
+  : process.env.MONGO_URI;
+
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 const apiRoutes         = require('./routes/api.js');
 const fccTestingRoutes  = require('./routes/fcctesting.js');
@@ -12,7 +21,21 @@ const app = express();
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
-app.use(cors({origin: '*'})); //For FCC testing purposes only
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"]
+      }
+    },
+    referrerPolicy: { policy: 'same-origin' },
+    frameguard: { action: 'sameorigin' },
+    dnsPrefetchControl: { allow: false }
+  })
+);
+app.use(cors({ origin: '*' })); // For FCC testing purposes only
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
